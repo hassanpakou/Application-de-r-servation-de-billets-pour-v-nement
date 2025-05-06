@@ -1,4 +1,7 @@
-function setupAuth() {
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { collection, setDoc, doc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+export function setupAuth(auth, db) {
     const loginButton = document.getElementById('loginButton');
     const registerButton = document.getElementById('registerButton');
     const logoutButton = document.getElementById('logout');
@@ -8,7 +11,7 @@ function setupAuth() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             try {
-                await auth.signInWithEmailAndPassword(email, password);
+                await signInWithEmailAndPassword(auth, email, password);
                 window.location.href = 'index.html';
             } catch (error) {
                 alert('Erreur de connexion : ' + error.message);
@@ -21,11 +24,11 @@ function setupAuth() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                await db.collection('users').doc(userCredential.user.uid).set({
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, 'users', userCredential.user.uid), {
                     email,
                     role: 'user',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: serverTimestamp()
                 });
                 window.location.href = 'index.html';
             } catch (error) {
@@ -36,12 +39,12 @@ function setupAuth() {
 
     if (logoutButton) {
         logoutButton.addEventListener('click', () => {
-            auth.signOut();
+            signOut(auth);
             window.location.href = 'login.html';
         });
     }
 
-    auth.onAuthStateChanged(user => {
+    onAuthStateChanged(auth, user => {
         const loginMenu = document.getElementById('loginMenu');
         const userMenu = document.getElementById('userMenu');
         const organizerMenu = document.getElementById('organizerMenu');
@@ -51,7 +54,7 @@ function setupAuth() {
         if (user) {
             loginMenu?.classList.add('d-none');
             logoutMenu?.classList.remove('d-none');
-            db.collection('users').doc(user.uid).get().then(doc => {
+            getDoc(doc(db, 'users', user.uid)).then(doc => {
                 const role = doc.data()?.role || 'user';
                 organizerMenu?.classList.toggle('d-none', role !== 'organizer' && role !== 'admin');
                 adminMenu?.classList.toggle('d-none', role !== 'admin');
@@ -77,5 +80,3 @@ function showSection(sectionId) {
     });
     document.getElementById(sectionId)?.classList.remove('d-none');
 }
-
-setupAuth();

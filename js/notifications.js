@@ -1,15 +1,23 @@
-async function checkPendingReservations() {
+import { collection, getDocs, updateDoc, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+async function checkReservations() {
+    const db = window.db;
+    const reservations = await getDocs(collection(db, 'reservations'));
     const now = new Date();
-    const reservations = await db.collection('reservations').where('status', '==', 'en attente').get();
-    reservations.forEach(async doc => {
-        const res = doc.data();
-        if (res.paymentDue.toDate() < now) {
-            await db.collection('reservations').doc(doc.id).update({ status: 'annulée' });
-            const event = await db.collection('events').doc(res.eventId).get();
-            await db.collection('events').doc(res.eventId).update({ seats: event.data().seats + 1 });
-            console.log(`Réservation ${doc.id} annulée : paiement non complété.`);
-        } else if (res.paymentDue.toDate() - now < 24 * 60 * 60 * 1000) {
-            console.log(`Rappel envoyé pour la réservation ${doc.id}.`);
+
+    reservations.forEach(async resDoc => {
+        const res = resDoc.data();
+        if (res.status === 'en attente' && res.paymentDue) {
+            const dueDate = res.paymentDue.toDate();
+            if (now > dueDate) {
+                await deleteDoc(doc(db, 'reservations', resDoc.id));
+                console.log(`Réservation ${resDoc.id} annulée pour non-paiement.`);
+            } else if (now > new Date(dueDate - 24 * 60 * 60 * 1000)) {
+                console.log(`Rappel envoyé pour la réservation ${resDoc.id}.`);
+            }
         }
     });
-}wsetInterval(checkPendingReservations, 60 * 1000);
+}
+
+setInterval(checkReservations, 60000);
+checkReservations();

@@ -1,9 +1,12 @@
-async function loadEvents() {
+import { collection, getDocs, getDoc, addDoc, updateDoc, doc, where, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+export async function loadEvents() {
+    const db = window.db;
     const eventList = document.getElementById('eventList');
     if (!eventList) return;
     eventList.innerHTML = '';
-    const events = await db.collection('events').get();
-    events.forEach(doc => {
+    const eventsSnapshot = await getDocs(collection(db, 'events'));
+    eventsSnapshot.forEach(doc => {
         const event = doc.data();
         const card = `
             <div class="col-md-4">
@@ -28,14 +31,16 @@ async function loadEvents() {
     });
 }
 
-async function reserveTicket(eventId, type) {
+export async function reserveTicket(eventId, type) {
+    const auth = window.auth;
+    const db = window.db;
     const user = auth.currentUser;
     if (!user) {
         alert('Veuillez vous connecter.');
         return;
     }
     const category = document.getElementById(`category_${eventId}`).value;
-    const eventDoc = await db.collection('events').doc(eventId).get();
+    const eventDoc = await getDoc(doc(db, 'events', eventId));
     const event = eventDoc.data();
     if (event.seats <= 0) {
         alert('Aucune place disponible.');
@@ -50,12 +55,12 @@ async function reserveTicket(eventId, type) {
         type,
         price: type === 'acompte' ? price * 0.5 : price,
         status: type === 'acompte' ? 'en attente' : 'confirmée',
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        timestamp: serverTimestamp(),
         paymentDue: type === 'acompte' ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null
     };
 
-    await db.collection('reservations').add(reservation);
-    await db.collection('events').doc(eventId).update({ seats: event.seats - 1 });
+    await addDoc(collection(db, 'reservations'), reservation);
+    await updateDoc(doc(db, 'events', eventId), { seats: event.seats - 1 });
 
     if (type === 'complet') {
         console.log('Paiement effectué');
@@ -71,16 +76,18 @@ async function reserveTicket(eventId, type) {
     loadReservations();
 }
 
-async function loadReservations() {
+export async function loadReservations() {
+    const auth = window.auth;
+    const db = window.db;
     const user = auth.currentUser;
     if (!user) return;
     const reservationStatus = document.getElementById('reservationStatus');
     if (!reservationStatus) return;
     reservationStatus.innerHTML = '<h3>Vos Réservations</h3>';
-    const reservations = await db.collection('reservations').where('userId', '==', user.uid).get();
+    const reservations = await getDocs(query(collection(db, 'reservations'), where('userId', '==', user.uid)));
     reservations.forEach(async doc => {
         const res = doc.data();
-        const event = (await db.collection('events').doc(res.eventId).get()).data();
+        const event = (await getDoc(doc(db, 'events', res.eventId))).data();
         reservationStatus.innerHTML += `
             <div class="alert alert-info">
                 Événement: ${event.name}<br>
@@ -100,4 +107,11 @@ document.getElementById('userMenu')?.addEventListener('click', () => {
 
 if (window.location.pathname.includes('index.html')) {
     loadEvents();
+}
+
+function showSection(sectionId) {
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.add('d-none');
+    });
+    document.getElementById(sectionId)?.classList.remove('d-none');
 }

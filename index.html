@@ -10,7 +10,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
-            <a class="navbar-brand" href="#"><img src="assets/visora.png" alt="Logo" width="30"> TicketMaster</a>
+            <a class="navbar-brand" href="#"><img src="assets/visora1.png" alt="Logo" width="30"> TicketMaster</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -61,15 +61,41 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/events.js"></script>
-    <script src="js/organizer.js"></script>
-    <script src="js/admin.js"></script>
-    <script src="js/notifications.js"></script>
-</body>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+        import { setupAuth } from './js/auth.js';
+        import { loadEvents, loadReservations } from './js/events.js';
+        import { loadOrganizerReservations } from './js/organizer.js';
+        import { loadUserManagement } from './js/admin.js';
+        import './js/notifications.js';
+    
+        const firebaseConfig = {
+  apiKey: "AIzaSyDsHiCvpCg7KyvgtsYlnjUxM-CPokaay9s",
+  authDomain: "eventticketreservation-eda8e.firebaseapp.com",
+  projectId: "eventticketreservation-eda8e",
+  storageBucket: "eventticketreservation-eda8e.firebasestorage.app",
+  messagingSenderId: "701269523112",
+  appId: "1:701269523112:web:143abe903cba904923a09d"
+};
+    
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+    
+        // Exposer auth et db pour les autres scripts
+        window.auth = auth;
+        window.db = db;
+    
+        // Configurer l'application
+        setupAuth(auth, db);
+        loadEvents();
+        loadReservations();
+        loadOrganizerReservations();
+        loadUserManagement();
+    </script>
+    </body>
 </html>
