@@ -71,7 +71,7 @@
         import { loadOrganizerReservations } from './js/organizer.js';
         import { loadUserManagement } from './js/admin.js';
         import './js/notifications.js';
-    
+
         const firebaseConfig = {
   apiKey: "AIzaSyDsHiCvpCg7KyvgtsYlnjUxM-CPokaay9s",
   authDomain: "eventticketreservation-eda8e.firebaseapp.com",
@@ -80,16 +80,16 @@
   messagingSenderId: "701269523112",
   appId: "1:701269523112:web:143abe903cba904923a09d"
 };
-    
+
         // Initialiser Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-    
+
         // Exposer auth et db pour les autres scripts
         window.auth = auth;
         window.db = db;
-    
+
         // Configurer l'application
         setupAuth(auth, db);
         loadEvents();
@@ -97,5 +97,5 @@
         loadOrganizerReservations();
         loadUserManagement();
     </script>
-    </body>
+</body>
 </html>
